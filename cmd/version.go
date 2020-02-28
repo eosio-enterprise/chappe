@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/morikuni/aec"
 	"github.com/spf13/cobra"
 )
 
@@ -16,8 +15,8 @@ var (
 
 // PrintChappeASCIIArt ...
 func PrintChappeASCIIArt() {
-	chappeLogo := aec.BlueF.Apply(chappeFigletStr)
-	fmt.Print(chappeLogo)
+	// chappeLogo := aec.BlueF.Apply(chappeFigletStr)
+	fmt.Print(chappeFigletStr)
 }
 
 // MakeVersion ...
@@ -41,11 +40,4 @@ func MakeVersion() *cobra.Command {
 }
 
 // TODO: Print chappe figlet logo with version
-const chappeFigletStr = "chappe"
-
-//  	 _
-//  ___| |__   __ _ _ __  _ __   ___
-// / __| '_ \ / _` | '_ \| '_ \ / _ \
-// | (__| | | | (_| | |_) | |_) |  __/
-// \___|_| |_|\__,_| .__/| .__/ \___|
-// 				|_|   |_|
+const chappeFigletStr = "Welcome to Chappe Private Messaging for EOSIO\n\n"

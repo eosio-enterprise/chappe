@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/eosio-enterprise/chappe/pkg"
 	"github.com/spf13/cobra"
 )
 
@@ -84,10 +83,8 @@ func MakeCreateKey() *cobra.Command {
 
 		fmt.Println(
 			`=======================================================================
-key ` + keyName + ` created.
-=======================================================================
-		
-` + pkg.ThanksForUsing)
+key ` + keyName + ` created in files ` + keyName + `.pem (private) and ` + keyName + `.pub (public)
+=======================================================================`)
 
 		return nil
 	}

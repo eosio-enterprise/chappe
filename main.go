@@ -14,12 +14,12 @@ func main() {
 	// cmdInfo := cmd.MakeInfo()
 	cmdUpdate := cmd.MakeUpdate()
 
-	// printarkadeASCIIArt := cmd.PrintArkadeASCIIArt
+	printChappeASCIIArt := cmd.PrintChappeASCIIArt
 
 	var rootCmd = &cobra.Command{
 		Use: "chappe",
 		Run: func(cmd *cobra.Command, args []string) {
-			printarkadeASCIIArt()
+			printChappeASCIIArt()
 			cmd.Help()
 		},
 	}
