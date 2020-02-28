@@ -20,4 +20,4 @@ func MakeUpdate() *cobra.Command {
 	return command
 }
 
-const chappeUpdate = `Update instructions coming soon`
+const chappeUpdate = `Update command not yet implemented`
