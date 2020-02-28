@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// MakeCreate ...
 func MakeCreate() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "create",

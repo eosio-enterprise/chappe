@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/alexellis/arkade/pkg"
+	"github.com/eosio-enterprise/chappe/pkg"
 	"github.com/spf13/cobra"
 )
 

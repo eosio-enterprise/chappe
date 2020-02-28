@@ -8,15 +8,19 @@ import (
 )
 
 var (
-	Version   string
+	// Version ...
+	Version string
+	// GitCommit ...
 	GitCommit string
 )
 
+// PrintChappeASCIIArt ...
 func PrintChappeASCIIArt() {
 	chappeLogo := aec.BlueF.Apply(chappeFigletStr)
 	fmt.Print(chappeLogo)
 }
 
+// MakeVersion ...
 func MakeVersion() *cobra.Command {
 	var command = &cobra.Command{
 		Use:          "version",
@@ -37,7 +41,8 @@ func MakeVersion() *cobra.Command {
 }
 
 // TODO: Print chappe figlet logo with version
-const chappeFigletStr = 'chappe'
+const chappeFigletStr = "chappe"
+
 //  	 _
 //  ___| |__   __ _ _ __  _ __   ___
 // / __| '_ \ / _` | '_ \| '_ \ / _ \
