@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/eosio-enterprise/chappe/cmd"
+	cmd "github.com/eosio-enterprise/chappe/cmd"
 	"github.com/spf13/cobra"
 )
 
