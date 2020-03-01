@@ -1,3 +1,4 @@
 **/*.pem
 **/*.pub
 chappe
+.vscode

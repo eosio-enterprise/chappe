@@ -13,7 +13,8 @@ func main() {
 	cmdCreate := cmd.MakeCreate()
 	cmdUpdate := cmd.MakeUpdate()
 	cmdPublish := cmd.MakePublish()
-	cmdSubscribe := cmd.MakeSubscribe()
+	cmdServer := cmd.MakeServer()
+	cmdGet := cmd.MakeGet()
 
 	printChappeASCIIArt := cmd.PrintChappeASCIIArt
 
@@ -29,7 +30,8 @@ func main() {
 	rootCmd.AddCommand(cmdVersion)
 	rootCmd.AddCommand(cmdUpdate)
 	rootCmd.AddCommand(cmdPublish)
-	rootCmd.AddCommand(cmdSubscribe)
+	rootCmd.AddCommand(cmdServer)
+	rootCmd.AddCommand(cmdGet)
 
 	if err := rootCmd.Execute(); err != nil {
 		os.Exit(1)

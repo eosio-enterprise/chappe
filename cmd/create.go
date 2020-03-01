@@ -21,8 +21,6 @@ on the chappe network. Potentially create new networks.`,
 		SilenceUsage: false,
 	}
 
-	command.PersistentFlags().String("kubeconfig", "kubeconfig", "Local path for your kubeconfig file")
-
 	command.RunE = func(command *cobra.Command, args []string) error {
 
 		if len(args) == 0 {
@@ -35,9 +33,6 @@ on the chappe network. Potentially create new networks.`,
 	}
 
 	command.AddCommand(apps.MakeCreateKey())
-	// command.AddCommand(apps.MakeInstallMetricsServer())
-
-	// command.AddCommand(MakeInfo())
 
 	return command
 }
