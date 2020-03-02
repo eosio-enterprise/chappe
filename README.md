@@ -1,5 +1,6 @@
 
 # Chappe Private Messaging
+This project implements many-to-many encryption using ```eosio``` and IPFS. The use case is described in the [background document](BACKGROUND.md)
 
 ## Quick Start
 NOTE: connects to localhost for IPFS and https://jungle2.cryptolions.io for EOSIO
@@ -100,94 +101,93 @@ We generate a random symmetric key to encrypt the message, then use the channel'
 
 Generate a one-time use key to encrypt the body of the message.
 ``` go
-    key := [32]byte{}
-	_, err := io.ReadFull(rand.Reader, key[:])
-	if err != nil {
-		panic(err)
-	}
+key := [32]byte{}
+_, err := io.ReadFull(rand.Reader, key[:])
+if err != nil {
+    panic(err)
+}
 ```
 ##### Step 2: Encrypt the Message Data with the AES Key  
 
 ``` go
-    block, err := aes.NewCipher(key[:])
-	if err != nil {
-		return nil, err
-	}
+block, err := aes.NewCipher(key[:])
+if err != nil {
+    return nil, err
+}
 
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
+gcm, err := cipher.NewGCM(block)
+if err != nil {
+    return nil, err
+}
 
-	nonce := make([]byte, gcm.NonceSize())
-	_, err = io.ReadFull(rand.Reader, nonce)
-	if err != nil {
-		return nil, err
-	}
+nonce := make([]byte, gcm.NonceSize())
+_, err = io.ReadFull(rand.Reader, nonce)
+if err != nil {
+    return nil, err
+}
 
-	aesEncryptedData := gcm.Seal(nonce, nonce, plaintext, nil), nil
+aesEncryptedData := gcm.Seal(nonce, nonce, plaintext, nil), nil
 ```
 
 ##### Step 3: Encrypt the AES Key with the Channel's Private Key 
 
 ``` go
-    encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, key, label)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error from RSA encryption: %s\n", err)
-		return nil, err
-	}
+encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, key, label)
+if err != nil {
+    fmt.Fprintf(os.Stderr, "Error from RSA encryption: %s\n", err)
+    return nil, err
+}
 ```
 
 ##### Step 4: Publish Object to IPFS
 The Encrypted Payload plus the Encrypted AES Key can be combined together, along with human-readable text to form the object. It is published to IPFS and a hash is returned.
 
 ``` go
-    type PersistedObject struct {
-        EncryptedPayload   []byte
-        EncryptedAESKey    []byte
-        UnencryptedPayload string
-    }
+type PersistedObject struct {
+    EncryptedPayload   []byte
+    EncryptedAESKey    []byte
+    UnencryptedPayload string
+}
 
-    jsonPayloadNode, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not marshal:  %s", err)
-	}
+jsonPayloadNode, err := json.Marshal(payload)
+if err != nil {
+    fmt.Fprintf(os.Stderr, "Could not marshal:  %s", err)
+}
 
-	hash, err := sh.Add(strings.NewReader(string(jsonPayloadNode)))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not add data to IPFS: %s", err)
-	}
-	fmt.Println("IPFS Hash: ", hash)
-
+hash, err := sh.Add(strings.NewReader(string(jsonPayloadNode)))
+if err != nil {
+    fmt.Fprintf(os.Stderr, "Could not add data to IPFS: %s", err)
+}
+fmt.Println("IPFS Hash: ", hash)
 ```
 
 ##### Step 5: Publish IPFS Hash to EOSIO Blockchain
 The user/node then publishes the IPFS hash to the appropriate blockchain, which records the event's existence, although elements of this metadata can be masked.
-
 ``` go
-    txOpts := &eos.TxOptions{}
-	if err := txOpts.FillFromChain(api); err != nil {
-		panic(fmt.Errorf("filling tx opts: %s", err))
-	}
+txOpts := &eos.TxOptions{}
+if err := txOpts.FillFromChain(api); err != nil {
+    panic(fmt.Errorf("filling tx opts: %s", err))
+}
 
-	tx := eos.NewTransaction([]*eos.Action{message.NewPub(hash, readableMemo)}, txOpts)
-	_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
-	if err != nil {
-		panic(fmt.Errorf("sign transaction: %s", err))
-	}
+tx := eos.NewTransaction([]*eos.Action{message.NewPub(hash, readableMemo)}, txOpts)
+_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
+if err != nil {
+    panic(fmt.Errorf("sign transaction: %s", err))
+}
 
-	response, err := api.PushTransaction(packedTx)
-	if err != nil {
-		panic(fmt.Errorf("push transaction: %s", err))
-	}
+response, err := api.PushTransaction(packedTx)
+if err != nil {
+    panic(fmt.Errorf("push transaction: %s", err))
+}
 ```
 
 ### Back to Subscription
 
 The inverse happens on the subscription side: 
-- dfuse fires a websocket
+- dfuse fires a websocket ( TODO: [ ] need to migrate to GraphQL)
 - IPFS document is retrieved
 - AES key is decrypted
 - Message is decrypted
+
 
 (TODO: need to add an signed acknowledgement back to the sender)
