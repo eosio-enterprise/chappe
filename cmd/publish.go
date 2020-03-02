@@ -130,8 +130,8 @@ func MakePublish() *cobra.Command {
 		persistedObject := PersistedObject{}
 		persistedObject.UnencryptedPayload = readableMemo
 
-		payload, _ := json.Marshal(privatePayload)
-		fmt.Println("Before Encryption:")
+		payload, _ := json.MarshalIndent(privatePayload, "", "  ")
+		fmt.Println("Broadcasting Message:")
 		fmt.Println(string(payload))
 
 		if encryptFlag {

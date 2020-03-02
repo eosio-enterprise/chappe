@@ -17,6 +17,7 @@ func MakeUpdate() *cobra.Command {
 	command.Run = func(cmd *cobra.Command, args []string) {
 		fmt.Println("Subscribe action is not yet implemented")
 		fmt.Println("Contribute: https://github.com/eosio-enterprise/chappe/blob/master/CONTRIBUTING.md")
+
 	}
 	return command
 }
