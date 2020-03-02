@@ -1,6 +1,6 @@
 
 # Chappe Private Messaging
-This project implements many-to-many encryption using ```eosio``` and IPFS. The use case is described in the [background document](BACKGROUND.md)
+This project implements many-to-many encryption using ```eosio``` and IPFS. The use case is described in the [background document](BACKGROUND.md) (it's a bit outdated in terms of design though)
 
 ## Quick Start
 NOTE: connects to localhost for IPFS and https://jungle2.cryptolions.io for EOSIO
