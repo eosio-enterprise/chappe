@@ -3,6 +3,22 @@
 This project implements many-to-many encryption using ```eosio``` and IPFS. The use case is described in the [background document](BACKGROUND.md) (it's a bit outdated in terms of design though)
 
 ## Quick Start
+
+Create config.yaml
+```
+cat > config.yaml <<EOF
+IPFS:
+    Endpoint: localhost:5001
+Eosio:
+    Endpoint: https://jungle2.cryptolions.io
+    PublishPrivateKey: 5JH1oeRv7mMX98usrCdA4hPWauKruPm1ywHYW8unZGqqpmjdZif  
+Dfuse:
+    WSEndpoint: wss://jungle.eos.dfuse.io/v1/stream
+    Origin: https://github.com/eosio-enterprise/chappe
+    ApiKey: web_***  # Replace this, get one at dfuse.io
+EOF
+```
+
 NOTE: connects to localhost for IPFS and https://jungle2.cryptolions.io for EOSIO
 ```
 DFUSE_API_KEY=<.....>

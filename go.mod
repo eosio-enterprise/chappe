@@ -12,6 +12,7 @@ require (
 	github.com/multiformats/go-multihash v0.0.10
 	github.com/polydawn/refmt v0.0.0-20190807091052-3d65705ee9f1
 	github.com/spf13/cobra v0.0.6
+	github.com/spf13/viper v1.6.2
 	github.com/tidwall/gjson v1.3.2
 	golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be
 	google.golang.org/grpc v1.21.0

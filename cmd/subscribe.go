@@ -2,15 +2,7 @@ package cmd
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -19,8 +11,10 @@ import (
 	"time"
 
 	"github.com/dfuse-io/eosws-go"
+	"github.com/eosio-enterprise/chappe/internal/encryption"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/tidwall/gjson"
 )
 
@@ -35,11 +29,9 @@ func MakeSubscribe() *cobra.Command {
 	}
 
 	command.Flags().StringVarP(&channelName, "channel-name", "n", "default", "channel name")
-	command.Flags().StringVarP(&eosioEndpoint, "eosio-endpoint", "e", "https://jungle2.cryptolions.io", "EOSIO JSONRPC endpoint")
+	command.Flags().StringVarP(&eosioEndpoint, "eosio-endpoint", "e", viper.GetString("Eosio.Endpoint"), "EOSIO JSONRPC endpoint")
 
 	command.Run = func(cmd *cobra.Command, args []string) {
-		fmt.Println("Ctrl-C to exit")
-		fmt.Println("Contribute: https://github.com/eosio-enterprise/chappe/blob/master/CONTRIBUTING.md")
 
 		go func() {
 
@@ -64,7 +56,7 @@ func MakeSubscribe() *cobra.Command {
 					fmt.Println("IPFS Hash :", ipfsHash)
 					fmt.Println("Memo		:", memo)
 
-					sh := shell.NewShell("localhost:5001")
+					sh := shell.NewShell(viper.GetString("IPFS.Endpoint"))
 					reader, err := sh.Cat(ipfsHash.String())
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Could not not find IPFS hash %s", err)
@@ -79,12 +71,12 @@ func MakeSubscribe() *cobra.Command {
 						panic(err)
 					}
 
-					aesKey, err := rsaDecrypt(channelName, persistedObject.EncryptedAESKey)
+					aesKey, err := encryption.RsaDecrypt(channelName, persistedObject.EncryptedAESKey)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s", err)
 					}
 
-					plaintext, err := aesDecrypt(persistedObject.EncryptedPayload, aesKey)
+					plaintext, err := encryption.AesDecrypt(persistedObject.EncryptedPayload, &aesKey)
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Error from decryption: %s\n", err)
 					}
@@ -115,77 +107,6 @@ func MakeSubscribe() *cobra.Command {
 	return command
 }
 
-var dfuseEndpoint = "wss://jungle.eos.dfuse.io/v1/stream"
-var origin = "https://origin.example.io"
-
-func parseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(privPEM)
-	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
-	}
-
-	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return priv, nil
-}
-
-func load(keyname string) *rsa.PrivateKey {
-
-	privateKeyPemStr, err := ioutil.ReadFile("" + keyname + ".pem")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
-		return nil
-	}
-
-	priv, err := parseRsaPrivateKeyFromPem(privateKeyPemStr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
-		return nil
-	}
-	return priv
-}
-
-func rsaDecrypt(channelName string, payload []byte) ([]byte, error) {
-	privateKey := load(channelName)
-	label := []byte("chappe") // TODO: migrate to something else?
-
-	plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, payload, label)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s\n", err)
-		return nil, err
-	}
-
-	return plaintext, nil
-}
-
-// Decrypt decrypts data using 256-bit AES-GCM.  This both hides the content of
-// the data and provides a check that it hasn't been altered. Expects input
-// form nonce|ciphertext|tag where '|' indicates concatenation.
-func aesDecrypt(ciphertext []byte, key []byte) (plaintext []byte, err error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(ciphertext) < gcm.NonceSize() {
-		return nil, errors.New("malformed ciphertext")
-	}
-
-	return gcm.Open(nil,
-		ciphertext[:gcm.NonceSize()],
-		ciphertext[gcm.NonceSize():],
-		nil,
-	)
-}
-
 func getToken(apiKey string) (token string, expiration time.Time, err error) {
 	reqBody := bytes.NewBuffer([]byte(fmt.Sprintf(`{"api_key":"%s"}`, apiKey)))
 	resp, err := http.Post("https://auth.dfuse.io/v1/auth/issue", "application/json", reqBody)
@@ -207,9 +128,9 @@ func getToken(apiKey string) (token string, expiration time.Time, err error) {
 }
 
 func getClient() *eosws.Client {
-	apiKey := os.Getenv("DFUSE_API_KEY")
+	apiKey := viper.GetString("Dfuse.ApiKey")
 	if apiKey == "" {
-		log.Fatalf("Set your API key to environment variable DFUSE_API_KEY")
+		log.Fatalf("Missing Dfuse.ApiKey in config")
 	}
 
 	jwt, _, err := eosws.Auth(apiKey)
@@ -217,9 +138,10 @@ func getClient() *eosws.Client {
 		log.Fatalf("cannot get auth token: %s", err.Error())
 	}
 
-	dfuseEndpoint := "wss://jungle.eos.dfuse.io/v1/stream"
-	origin := "github.com/eosio-enterprise/chappe"
-	client, err := eosws.New(dfuseEndpoint, jwt, origin)
+	// var dfuseEndpoint = viper.GetString("Dfuse.WSEndpoint")
+	var origin = viper.GetString("Dfuse.Origin")
+
+	client, err := eosws.New(viper.GetString("Dfuse.WSEndpoint"), jwt, origin)
 	if err != nil {
 		log.Fatalf("cannot connect to dfuse endpoint: %s", err.Error())
 	}
@@ -228,14 +150,14 @@ func getClient() *eosws.Client {
 
 func getActionTraces() *eosws.GetActionTraces {
 	ga := &eosws.GetActionTraces{}
-	ga.ReqID = "chappe GetActions"
+	ga.ReqID = "chappe"
 	ga.StartBlock = -300
 	ga.Listen = true
 	ga.WithProgress = 3
 	ga.IrreversibleOnly = false
-	ga.Data.Accounts = "messengerbus"
+	ga.Data.Accounts = viper.GetString("Eosio.PublishAccount")
 	ga.Data.ActionNames = "pub"
-	fmt.Printf("Connecting to network...  %s::%s\n", ga.Data.Accounts, ga.Data.ActionNames)
+	fmt.Printf("Connecting...  %s::%s\n", ga.Data.Accounts, ga.Data.ActionNames)
 	ga.Data.WithInlineTraces = true
 	return ga
 }

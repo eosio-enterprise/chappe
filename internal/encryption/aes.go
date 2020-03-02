@@ -9,8 +9,7 @@
 // You should have received a copy of the CC0 Public Domain Dedication along
 // with this software. If not, see // <http://creativecommons.org/publicdomain/zero/1.0/>.
 
-// Package cmd Provides symmetric authenticated encryption using 256-bit AES-GCM with a random nonce.
-package cmd
+package encryption
 
 import (
 	"crypto/aes"
@@ -20,9 +19,9 @@ import (
 	"io"
 )
 
-// NewEncryptionKey generates a random 256-bit key for Encrypt() and
+// NewAesEncryptionKey generates a random 256-bit key for Encrypt() and
 // Decrypt(). It panics if the source of randomness fails.
-func NewEncryptionKey() *[32]byte {
+func NewAesEncryptionKey() *[32]byte {
 	key := [32]byte{}
 	_, err := io.ReadFull(rand.Reader, key[:])
 	if err != nil {
@@ -31,10 +30,10 @@ func NewEncryptionKey() *[32]byte {
 	return &key
 }
 
-// Encrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
+// AesEncrypt encrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Output takes the
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func Encrypt(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
+func AesEncrypt(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
 	block, err := aes.NewCipher(key[:])
 	if err != nil {
 		return nil, err
@@ -54,11 +53,11 @@ func Encrypt(plaintext []byte, key *[32]byte) (ciphertext []byte, err error) {
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-// Decrypt decrypts data using 256-bit AES-GCM.  This both hides the content of
+// AesDecrypt decrypts data using 256-bit AES-GCM.  This both hides the content of
 // the data and provides a check that it hasn't been altered. Expects input
 // form nonce|ciphertext|tag where '|' indicates concatenation.
-func Decrypt(ciphertext []byte, key *[32]byte) (plaintext []byte, err error) {
-	block, err := aes.NewCipher(key[:])
+func AesDecrypt(ciphertext []byte, key *[]byte) (plaintext []byte, err error) {
+	block, err := aes.NewCipher(*key)
 	if err != nil {
 		return nil, err
 	}

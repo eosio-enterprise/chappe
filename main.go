@@ -1,13 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	cmd "github.com/eosio-enterprise/chappe/cmd"
 	"github.com/spf13/cobra"
+	viper "github.com/spf13/viper"
 )
 
 func main() {
+
+	viper.SetConfigFile("config.yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Errorf("config file not found: %s", err))
+	}
 
 	cmdVersion := cmd.MakeVersion()
 	cmdCreate := cmd.MakeCreate()

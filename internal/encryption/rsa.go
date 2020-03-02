@@ -1,4 +1,4 @@
-package cmd
+package encryption
 
 import (
 	"crypto/rand"
@@ -76,4 +76,48 @@ func RsaEncrypt(channelName string, payload []byte) ([]byte, error) {
 		return nil, err
 	}
 	return encryptedData, nil
+}
+
+// RsaDecrypt ...
+func RsaDecrypt(channelName string, payload []byte) ([]byte, error) {
+	privateKey := load(channelName)
+	label := []byte("chappe") // TODO: migrate to something else?
+
+	plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, payload, label)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s\n", err)
+		return nil, err
+	}
+
+	return plaintext, nil
+}
+
+func parseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(privPEM)
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the key")
+	}
+
+	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return priv, nil
+}
+
+func load(keyname string) *rsa.PrivateKey {
+
+	privateKeyPemStr, err := ioutil.ReadFile("" + keyname + ".pem")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
+		return nil
+	}
+
+	priv, err := parseRsaPrivateKeyFromPem(privateKeyPemStr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
+		return nil
+	}
+	return priv
 }

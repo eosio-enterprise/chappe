@@ -2,3 +2,4 @@
 **/*.pub
 chappe
 .vscode
+config.yaml

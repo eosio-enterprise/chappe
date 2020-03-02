@@ -11,10 +11,12 @@ import (
 	"github.com/bxcodec/faker"
 	"github.com/eoscanada/eos-go"
 	"github.com/eosio-enterprise/chappe/cmd/message"
+	"github.com/eosio-enterprise/chappe/internal/encryption"
 	shell "github.com/ipfs/go-ipfs-api"
 
 	// "github.com/polydawn/refmt/json"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // PrivatePayload ...
@@ -40,29 +42,17 @@ type PersistedObject struct {
 	UnencryptedPayload string
 }
 
-func readPrivateKey() string {
-	// Right now, the key is read from an environment variable, it's an example after all.
-	// In a real-world scenario, would you probably integrate with a real wallet or something similar
-	envName := "EOS_GO_PRIVATE_KEY" // TODO: move to proper configuration
-	privateKey := os.Getenv(envName)
-	if privateKey == "" {
-		panic(fmt.Errorf("private key environment variable %q must be set", envName))
-	}
-
-	return privateKey
-}
-
 func publish(eosioEndpoint, channelName string, payload PersistedObject) (string, error) {
 	api := eos.New(eosioEndpoint)
 
 	keyBag := &eos.KeyBag{}
-	err := keyBag.ImportPrivateKey(readPrivateKey())
+	err := keyBag.ImportPrivateKey(viper.GetString("Eosio.PublishPrivateKey"))
 	if err != nil {
 		panic(fmt.Errorf("import private key: %s", err))
 	}
 	api.SetSigner(keyBag)
 
-	sh := shell.NewShell("localhost:5001") // TODO: move to configuration
+	sh := shell.NewShell(viper.GetString("IPFS.Endpoint")) // TODO: move to configuration
 	jsonPayloadNode, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Could not marshall:  %s", err)
@@ -135,15 +125,15 @@ func MakePublish() *cobra.Command {
 		fmt.Println(string(payload))
 
 		if encryptFlag {
-			aesKey := NewEncryptionKey()
-			aesEncryptedData, err := Encrypt(payload, aesKey)
+			aesKey := encryption.NewAesEncryptionKey()
+			aesEncryptedData, err := encryption.AesEncrypt(payload, aesKey)
 			if err != nil {
 				panic(fmt.Errorf("Error trying to encrypt %s", err))
 			}
 
 			persistedObject.EncryptedPayload = aesEncryptedData
 
-			encryptedAesKey, err := RsaEncrypt(channelName, aesKey[:])
+			encryptedAesKey, err := encryption.RsaEncrypt(channelName, aesKey[:])
 			if err != nil {
 				panic(fmt.Errorf("Error encrypting the AES key %s", err))
 			}
