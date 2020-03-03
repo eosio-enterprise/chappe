@@ -4,29 +4,32 @@ This project implements many-to-many encryption using ```eosio``` and IPFS. The 
 
 ## Quick Start
 
-Create config.yaml
+Clone repo & build
+``` bash
+git clone https://github.com/eosio-enterprise/chappe
+cd chappe
+make  (or "go build")
 ```
+
+Create config.yaml
+``` bash
 cat > config.yaml <<EOF
 IPFS:
     Endpoint: localhost:5001
 Eosio:
-    Endpoint: https://jungle2.cryptolions.io
-    PublishPrivateKey: 5JH1oeRv7mMX98usrCdA4hPWauKruPm1ywHYW8unZGqqpmjdZif  
+    Endpoint: https://kylin.eosn.io # cryptolions.io
+    PublishAccount: messengerbus
+    PublishPrivateKey: 5KAP1zytghuvowgprSPLNasajibZcxf4KMgdgNbrNj98xhcGAUa
 Dfuse:
-    WSEndpoint: wss://jungle.eos.dfuse.io/v1/stream
-    Origin: https://github.com/eosio-enterprise/chappe
+    WSEndpoint: wss://kylin.eos.dfuse.io/v1/stream
+    Origin: github.com/eosio-enterprise/chappe
     ApiKey: web_***  # Replace this, get one at dfuse.io
+KeyDirectory: channels/
 EOF
 ```
 
-NOTE: connects to localhost for IPFS and https://jungle2.cryptolions.io for EOSIO
-```
-DFUSE_API_KEY=<.....>
-EOS_GO_PRIVATE_KEY=5JH1oeRv7mMX98usrCdA4hPWauKruPm1ywHYW8unZGqqpmjdZif
-git clone https://github.com/eosio-enterprise/chappe
-cd chappe
-make
-
+Run chappe
+``` bash
 ➜ ./chappe
 Welcome to Chappe Private Messaging for EOSIO
 
@@ -57,40 +60,37 @@ Use "chappe [command] --help" for more information about a command.
 ### Dependencies
 #### IPFS
 I run with go-ipfs:latest running in Docker. It does not work with Infura (header errors?).
-```
+``` zsh
 export ipfs_staging=</absolute/path/to/somewhere/>
 export ipfs_data=</absolute/path/to/somewhere_else/>
 
 docker run -d --name ipfs_host -v $ipfs_staging:/export -v $ipfs_data:/data/ipfs -p 4001:4001 -p 127.0.0.1:8080:8080 -p 127.0.0.1:5001:5001 ipfs/go-ipfs:latest
 ```
 
-
 ### Create a Key (Channel)
-```
+``` bash
 ./chappe create key --channel-name chan4242
 ```
 The channel key is an assymetric RSA key. If you create a channel and you want another node to receive your messages, you would share the "chan4242.pem" file.
 
-
 ### Subscribe to the Channel
 This runs a server, so fork your terminal shell to hold the ENV VARS intact. 
-```
+``` bash
 ./chappe subscribe --channel-name chan4242"
 ```
 
 (After I publish, I will describe what happens with the subscribe process)
 
-
 ### Publish to the Channel
 On a separate tab, publish a message:
-```
+``` bash
 ./chappe publish --channel-name chan4242 --readable-memo "This is human-readable, unencrypted memo"
 ```
 
 Currently, the publish command generates fake private data to be shared on the channel.
 
 For example: 
-```
+``` json
 {
   "RecordID": "94ffdee8-7c40-4133-a210-e57740cb7a99",
   "FirstName": "Cordie",
@@ -146,7 +146,6 @@ aesEncryptedData := gcm.Seal(nonce, nonce, plaintext, nil), nil
 ```
 
 ##### Step 3: Encrypt the AES Key with the Channel's Private Key 
-
 ``` go
 encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, key, label)
 if err != nil {
