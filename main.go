@@ -24,12 +24,9 @@ func main() {
 	cmdSubscribe := cmd.MakeSubscribe()
 	cmdGet := cmd.MakeGet()
 
-	printChappeASCIIArt := cmd.PrintChappeASCIIArt
-
 	var rootCmd = &cobra.Command{
 		Use: "chappe",
 		Run: func(cmd *cobra.Command, args []string) {
-			printChappeASCIIArt()
 			cmd.Help()
 		},
 	}

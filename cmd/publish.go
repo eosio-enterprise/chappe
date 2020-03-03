@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"strings"
+	"time"
 
 	"fmt"
 	"os"
@@ -100,7 +101,7 @@ func MakePublish() *cobra.Command {
 		SilenceUsage: false,
 	}
 
-	command.Flags().StringVarP(&channelName, "channel-name", "n", "default", "channel name")
+	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "channel name")
 	command.Flags().StringVarP(&eosioEndpoint, "eosio-endpoint", "e", "https://jungle2.cryptolions.io", "EOSIO JSONRPC endpoint")
 	command.Flags().StringVarP(&readableMemo, "readable-memo", "m", "", "Human readable memo to attach to payload (never encrypted)")
 	command.Flags().BoolVarP(&encryptFlag, "encrypt", "", true, "Boolean flag whether to encrypt payload - defaults to true")
@@ -111,45 +112,49 @@ func MakePublish() *cobra.Command {
 			return fmt.Errorf("--channel-name is required when encrypting")
 		}
 
-		privatePayload := PrivatePayload{}
-		err := faker.FakeData(&privatePayload)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		persistedObject := PersistedObject{}
-		persistedObject.UnencryptedPayload = readableMemo
-
-		payload, _ := json.MarshalIndent(privatePayload, "", "  ")
-		fmt.Println("Broadcasting Message:")
-		fmt.Println(string(payload))
-
-		if encryptFlag {
-			aesKey := encryption.NewAesEncryptionKey()
-			aesEncryptedData, err := encryption.AesEncrypt(payload, aesKey)
+		for {
+			privatePayload := PrivatePayload{}
+			err := faker.FakeData(&privatePayload)
 			if err != nil {
-				panic(fmt.Errorf("Error trying to encrypt %s", err))
+				fmt.Println(err)
 			}
 
-			persistedObject.EncryptedPayload = aesEncryptedData
+			persistedObject := PersistedObject{}
+			persistedObject.UnencryptedPayload = readableMemo
 
-			encryptedAesKey, err := encryption.RsaEncrypt(channelName, aesKey[:])
-			if err != nil {
-				panic(fmt.Errorf("Error encrypting the AES key %s", err))
+			payload, _ := json.MarshalIndent(privatePayload, "", "  ")
+			fmt.Println("Broadcasting Message:")
+			fmt.Println(string(payload))
+
+			if encryptFlag {
+				aesKey := encryption.NewAesEncryptionKey()
+				aesEncryptedData, err := encryption.AesEncrypt(payload, aesKey)
+				if err != nil {
+					panic(fmt.Errorf("Error trying to encrypt %s", err))
+				}
+
+				persistedObject.EncryptedPayload = aesEncryptedData
+
+				encryptedAesKey, err := encryption.RsaEncrypt(channelName, aesKey[:])
+				if err != nil {
+					panic(fmt.Errorf("Error encrypting the AES key %s", err))
+				}
+				persistedObject.EncryptedAESKey = encryptedAesKey
 			}
-			persistedObject.EncryptedAESKey = encryptedAesKey
-		}
 
-		trxID, err := publish(eosioEndpoint, channelName, persistedObject)
-		if err != nil {
-			fmt.Println("Error submitting transaction to EOSIO: ", err)
-		}
+			trxID, err := publish(eosioEndpoint, channelName, persistedObject)
+			if err != nil {
+				fmt.Println("Error submitting transaction to EOSIO: ", err)
+			}
 
-		fmt.Println(
-			`=======================================================================
+			fmt.Println(
+				`=======================================================================
 Published message to channel ` + channelName + `
 Transaction ID: ` + trxID + `
 =======================================================================`)
+
+			time.Sleep(7 * time.Second)
+		}
 
 		return nil
 	}

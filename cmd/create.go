@@ -9,18 +9,15 @@ import (
 	"io/ioutil"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
-const defaultVersion = "" // If we don't set version then we get latest
-
-// GenerateRsaKeyPair ...
-func GenerateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
+func generateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
 	privkey, _ := rsa.GenerateKey(rand.Reader, 4096)
 	return privkey, &privkey.PublicKey
 }
 
-// ExportRsaPrivateKeyAsPemStr ...
-func ExportRsaPrivateKeyAsPemStr(privkey *rsa.PrivateKey) []byte {
+func exportPrivateKey(privkey *rsa.PrivateKey) []byte {
 	privkeyBytes := x509.MarshalPKCS1PrivateKey(privkey)
 	privkeyPem := pem.EncodeToMemory(
 		&pem.Block{
@@ -31,8 +28,7 @@ func ExportRsaPrivateKeyAsPemStr(privkey *rsa.PrivateKey) []byte {
 	return privkeyPem
 }
 
-// ExportRsaPublicKeyAsPemStr ...
-func ExportRsaPublicKeyAsPemStr(pubkey *rsa.PublicKey) ([]byte, error) {
+func exportPublicKey(pubkey *rsa.PublicKey) ([]byte, error) {
 	pubkeyBytes, err := x509.MarshalPKIXPublicKey(pubkey)
 	if err != nil {
 		return nil, err
@@ -48,14 +44,14 @@ func ExportRsaPublicKeyAsPemStr(pubkey *rsa.PublicKey) ([]byte, error) {
 
 func create(keyname string) (*rsa.PrivateKey, *rsa.PublicKey) {
 
-	priv, pub := GenerateRsaKeyPair()
+	priv, pub := generateRsaKeyPair()
 
 	// Export the keys to pem string
-	privPem := ExportRsaPrivateKeyAsPemStr(priv)
-	pubPem, _ := ExportRsaPublicKeyAsPemStr(pub)
+	privPem := exportPrivateKey(priv)
+	pubPem, _ := exportPublicKey(pub)
 
-	ioutil.WriteFile(keyname+".pub", pubPem, 0644)
-	ioutil.WriteFile(keyname+".pem", privPem, 0644)
+	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pub", pubPem, 0644)
+	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pem", privPem, 0644)
 
 	return priv, pub
 }

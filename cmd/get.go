@@ -8,6 +8,7 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // MakeGet ...
@@ -30,7 +31,7 @@ func MakeGet() *cobra.Command {
 			return fmt.Errorf("--cid required")
 		}
 
-		sh := shell.NewShell("localhost:5001") // TODO: move to configuration
+		sh := shell.NewShell(viper.GetString("Ipfs.Endpoint"))
 		reader, err := sh.Cat(cid)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Could not add encrypted data to IPFS: %s", err)
@@ -40,7 +41,6 @@ func MakeGet() *cobra.Command {
 		buf.ReadFrom(reader)
 		catRand := buf.String()
 
-		fmt.Println("Object Contents:")
 		fmt.Println(catRand)
 
 		return nil

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 // ParseRsaPublicKeyFromPem ...
@@ -50,7 +52,7 @@ func ParseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
 
 func loadPublicKey(keyname string) *rsa.PublicKey {
 
-	publicKeyPemStr, err := ioutil.ReadFile(keyname + ".pub")
+	publicKeyPemStr, err := ioutil.ReadFile(viper.GetString("KeyDirectory") + keyname + ".pub")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
 		return nil
@@ -85,7 +87,7 @@ func RsaDecrypt(channelName string, payload []byte) ([]byte, error) {
 
 	plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, payload, label)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s\n", err)
+		//fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s\n", err)
 		return nil, err
 	}
 
@@ -108,7 +110,7 @@ func parseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
 
 func load(keyname string) *rsa.PrivateKey {
 
-	privateKeyPemStr, err := ioutil.ReadFile("" + keyname + ".pem")
+	privateKeyPemStr, err := ioutil.ReadFile(viper.GetString("KeyDirectory") + keyname + ".pem")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
 		return nil

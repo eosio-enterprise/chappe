@@ -28,7 +28,7 @@ func MakeSubscribe() *cobra.Command {
 		SilenceUsage: false,
 	}
 
-	command.Flags().StringVarP(&channelName, "channel-name", "n", "default", "channel name")
+	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "channel name")
 	command.Flags().StringVarP(&eosioEndpoint, "eosio-endpoint", "e", viper.GetString("Eosio.Endpoint"), "EOSIO JSONRPC endpoint")
 
 	command.Run = func(cmd *cobra.Command, args []string) {
@@ -53,8 +53,8 @@ func MakeSubscribe() *cobra.Command {
 					ipfsHash := gjson.Get(string(m.Data.Trace), "act.data.ipfs_hash")
 					memo := gjson.Get(string(m.Data.Trace), "act.data.memo")
 
-					fmt.Println("IPFS Hash :", ipfsHash)
-					fmt.Println("Memo		:", memo)
+					// fmt.Println("IPFS Hash :", ipfsHash)
+					// fmt.Println("Memo		:", memo)
 
 					sh := shell.NewShell(viper.GetString("IPFS.Endpoint"))
 					reader, err := sh.Cat(ipfsHash.String())
@@ -73,26 +73,32 @@ func MakeSubscribe() *cobra.Command {
 
 					aesKey, err := encryption.RsaDecrypt(channelName, persistedObject.EncryptedAESKey)
 					if err != nil {
-						fmt.Fprintf(os.Stderr, "Cannot decrypt the AES key: %s", err)
+						trxID := string(m.Data.TransactionID)
+						fmt.Println()
+						fmt.Println("###")
+						fmt.Println("Read message with memo: ", memo)
+						fmt.Println("Cannot decrypt body of message, discarding. TrxID: ", trxID)
+						fmt.Println()
+					} else {
+						plaintext, err := encryption.AesDecrypt(persistedObject.EncryptedPayload, &aesKey)
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "Error from decryption: %s\n", err)
+						}
+
+						var receivedPrivatePayload PrivatePayload
+						err = json.Unmarshal(plaintext, &receivedPrivatePayload)
+
+						indentedPayload, err := json.MarshalIndent(receivedPrivatePayload, "", "  ")
+						if err != nil {
+							fmt.Fprintf(os.Stderr, "Error from marshall indent: %s\n", err)
+						}
+
+						fmt.Println()
+						fmt.Printf("Received message: %s\n", string(indentedPayload))
 					}
-
-					plaintext, err := encryption.AesDecrypt(persistedObject.EncryptedPayload, &aesKey)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "Error from decryption: %s\n", err)
-					}
-
-					var receivedPrivatePayload PrivatePayload
-					err = json.Unmarshal(plaintext, &receivedPrivatePayload)
-
-					indentedPayload, err := json.MarshalIndent(receivedPrivatePayload, "", "  ")
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "Error from marshall indent: %s\n", err)
-					}
-
-					fmt.Printf("Received message: %s\n", string(indentedPayload))
 
 				case *eosws.Progress:
-					fmt.Println("Received Progress Message at Block:", m.Data.BlockNum)
+					fmt.Print(".") // , m.Data.BlockNum)
 				case *eosws.Listening:
 					fmt.Println("Received Listening Message ...")
 				default:
