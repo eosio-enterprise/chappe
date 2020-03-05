@@ -60,7 +60,7 @@ Use "chappe [command] --help" for more information about a command.
 ### Dependencies
 #### IPFS
 I run with go-ipfs:latest running in Docker. It does not work with Infura (header errors?).
-``` zsh
+``` bash
 export ipfs_staging=</absolute/path/to/somewhere/>
 export ipfs_data=</absolute/path/to/somewhere_else/>
 
@@ -76,7 +76,7 @@ The channel key is an assymetric RSA key. If you create a channel and you want a
 ### Subscribe to the Channel
 This runs a server, so fork your terminal shell to hold the ENV VARS intact. 
 ``` bash
-./chappe subscribe --channel-name chan4242"
+./chappe subscribe --channel-name chan4242
 ```
 
 (After I publish, I will describe what happens with the subscribe process)
