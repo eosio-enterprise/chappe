@@ -55,7 +55,7 @@ These six (6) parties have four (4) different permissioned sets of data. For exa
 6. Recipients of messages should also post acknowledgements of initial messages, which confirms receipt. This acknowledgement should have cryptographic proof that the recipient was able to receive and decrypt the message.  
 7. In Chappe's current design, participants do not know how many other participants are using the network or even how many other participants that are in channels in which they operate. This could be a problem, so perhaps we could require unencrypted messages periodically for "proof of keys" - I imagine this will vary by implementation.
 
-### Extra Credit
+### Next Steps
 1. Implementing a protocol such as JEDI (https://arxiv.org/pdf/1905.13369.pdf) would allow for:
     - Hierarchy of permissions (delegation)
     - Expiration of Permissions
