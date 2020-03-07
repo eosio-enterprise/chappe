@@ -17,7 +17,7 @@ cat > config.yaml <<EOF
 IPFS:
     Endpoint: localhost:5001
 Eosio:
-    Endpoint: https://kylin.eosn.io # cryptolions.io
+    Endpoint: https://kylin.eosusa.news
     PublishAccount: messengerbus
     PublishPrivateKey: 5KAP1zytghuvowgprSPLNasajibZcxf4KMgdgNbrNj98xhcGAUa
 Dfuse:
@@ -28,6 +28,22 @@ KeyDirectory: channels/
 EOF
 ```
 
+Create Channel
+```
+./chappe create key --channel-name chan4242
+```
+
+Run Subscriber
+```
+./chappe subscribe --channel-name chan4242
+```
+
+Open New Shell, and run Publisher
+```
+./chappe publish --channel-name chan4242 --readable-memo "This is human-readable, unencrypted memo"
+```
+
+## Menu
 Run chappe
 ``` bash
 ➜ ./chappe
@@ -56,7 +72,6 @@ Use "chappe [command] --help" for more information about a command.
 **PRs Welcome**
 
 ## Usage
-
 ### Dependencies
 #### IPFS
 I run with go-ipfs:latest running in Docker. It does not work with Infura (header errors?).
