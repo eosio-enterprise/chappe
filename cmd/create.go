@@ -65,6 +65,7 @@ func MakeCreate() *cobra.Command {
 		SilenceUsage: false,
 	}
 
+	var channelName string
 	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "Name of the private channel to create")
 
 	command.RunE = func(command *cobra.Command, args []string) error {

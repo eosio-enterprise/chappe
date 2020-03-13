@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	cmd "github.com/eosio-enterprise/chappe/cmd"
@@ -11,16 +11,15 @@ import (
 
 func main() {
 
-	viper.SetConfigFile("config.yaml")
+	viper.SetConfigFile("configs/config.yaml")
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("config file not found: %s", err))
+		log.Fatalf("config file not found: %s", err)
 	}
 
 	cmdVersion := cmd.MakeVersion()
 	cmdCreate := cmd.MakeCreate()
 	cmdUpdate := cmd.MakeUpdate()
 	cmdPublish := cmd.MakePublish()
-	cmdServer := cmd.MakeServer()
 	cmdSubscribe := cmd.MakeSubscribe()
 	cmdGet := cmd.MakeGet()
 
@@ -35,7 +34,6 @@ func main() {
 	rootCmd.AddCommand(cmdVersion)
 	rootCmd.AddCommand(cmdUpdate)
 	rootCmd.AddCommand(cmdPublish)
-	rootCmd.AddCommand(cmdServer)
 	rootCmd.AddCommand(cmdSubscribe)
 	rootCmd.AddCommand(cmdGet)
 
