@@ -15,7 +15,7 @@ Create config.yaml
 ``` bash
 cat > config.yaml <<EOF
 IPFS:
-    Endpoint: localhost:5001
+    Endpoint: ipfs.digscar.com:5001
 Eosio:
     Endpoint: https://kylin.eosusa.news
     PublishAccount: messengerbus
@@ -25,6 +25,7 @@ Dfuse:
     Origin: github.com/eosio-enterprise/chappe
     ApiKey: web_***  # Replace this, get one at dfuse.io
 KeyDirectory: channels/
+PublishInterval: 10s  # Go Duration object
 EOF
 ```
 
@@ -74,7 +75,8 @@ Use "chappe [command] --help" for more information about a command.
 ## Usage
 ### Dependencies
 #### IPFS
-I run with go-ipfs:latest running in Docker. It does not work with Infura (header errors?).
+It's simple to run your own IPFS node using Docker with only these 3 commands, or you may use ```ipfs.digscar.com``` for light testing.
+I run go-ipfs:latest running in Docker. 
 ``` bash
 export ipfs_staging=</absolute/path/to/somewhere/>
 export ipfs_data=</absolute/path/to/somewhere_else/>

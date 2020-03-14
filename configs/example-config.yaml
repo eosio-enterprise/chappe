@@ -9,3 +9,4 @@ Dfuse:
     Origin: github.com/eosio-enterprise/chappe
     ApiKey: <insert dfuse API key here>
 KeyDirectory: channels/
+PublishInterval: 1s  # Go Duration object

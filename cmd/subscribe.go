@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -22,7 +23,11 @@ func MakeSubscribe() *cobra.Command {
 	var channelName string
 	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "channel name")
 	command.Run = func(cmd *cobra.Command, args []string) {
+
 		go func() {
+
+			pkg.StreamMessages(context.TODO())
+
 			client := pkg.GetClient()
 			err := client.Send(pkg.GetActionTraces())
 			if err != nil {
@@ -37,7 +42,8 @@ func MakeSubscribe() *cobra.Command {
 
 				switch m := msg.(type) {
 				case *eosws.ActionTrace:
-					pkg.Receive(channelName, m)
+					pkg.StreamMessages(context.TODO())
+					// pkg.Receive(channelName, m)
 				case *eosws.Progress:
 					fmt.Print(".") // poor man's progress bar, using print not log
 				case *eosws.Listening:
