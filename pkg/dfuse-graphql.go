@@ -64,6 +64,7 @@ func createClient(endpoint string) pb.GraphQLClient {
 	return pb.NewGraphQLClient(conn)
 }
 
+// TODO: need to replace messengerbus with viper.GetString("Eosio.PublishAccount")
 const operationEOS = `subscription {
 	searchTransactionsForward(query:"receiver:messengerbus action:pub") {
 	  undo cursor
