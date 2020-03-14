@@ -6,27 +6,50 @@ import (
 
 	"github.com/dfuse-io/eosws-go"
 	"github.com/spf13/viper"
+	"github.com/tidwall/gjson"
 )
 
-// func getToken(apiKey string) (token string, expiration time.Time, err error) {
-// 	reqBody := bytes.NewBuffer([]byte(fmt.Sprintf(`{"api_key":"%s"}`, apiKey)))
-// 	resp, err := http.Post("https://auth.dfuse.io/v1/auth/issue", "application/json", reqBody)
-// 	if err != nil {
-// 		err = fmt.Errorf("unable to obtain token: %s", err)
-// 		return
-// 	}
+// StreamWS ...
+func StreamWS(channelName string) {
+	client := GetClient()
+	err := client.Send(GetActionTraces())
+	if err != nil {
+		log.Fatalf("Failed to send request to dfuse: %s", err)
+	}
 
-// 	if resp.StatusCode != 200 {
-// 		err = fmt.Errorf("unable to obtain token, status not 200, got %d: %s", resp.StatusCode, reqBody.String())
-// 		return
-// 	}
+	for {
+		msg, err := client.Read()
+		if err != nil {
+			log.Fatalf("Cannot read from dfuse client: %s", err)
+		}
 
-// 	if body, err := ioutil.ReadAll(resp.Body); err == nil {
-// 		token = gjson.GetBytes(body, "token").String()
-// 		expiration = time.Unix(gjson.GetBytes(body, "expires_at").Int(), 0)
-// 	}
-// 	return
-// }
+		switch m := msg.(type) {
+		case *eosws.ActionTrace:
+			//	pkg.StreamMessages(context.TODO())
+			receiveWS(channelName, m)
+		case *eosws.Progress:
+			fmt.Print(".") // poor man's progress bar, using print not log
+		case *eosws.Listening:
+			log.Println("Received Listening Message ...")
+		default:
+			log.Println("Received Unsupported Message", m)
+		}
+	}
+}
+
+func receiveWS(channelName string, dfuseMessage *eosws.ActionTrace) (Message, error) {
+	ipfsHash := gjson.Get(string(dfuseMessage.Data.Trace), "act.data.ipfs_hash")
+	memo := gjson.Get(string(dfuseMessage.Data.Trace), "act.data.memo")
+	fmt.Println()
+	log.Println("Received notification of new message: ", ipfsHash, "; memo: ", memo)
+
+	msg, err := Load(channelName, ipfsHash.String())
+	if err != nil {
+		log.Println("Error loading message: ", err)
+		return msg, err
+	}
+	return msg, nil
+}
 
 // GetClient ...
 func GetClient() *eosws.Client {

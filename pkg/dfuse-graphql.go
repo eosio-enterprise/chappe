@@ -85,7 +85,7 @@ type eosioDocument struct {
 }
 
 // StreamMessages ...
-func StreamMessages(ctx context.Context) {
+func StreamMessages(ctx context.Context, channelName string) {
 	/* The client can be re-used for all requests, cache it at the appropriate level */
 	client := createClient(viper.GetString("Dfuse.GraphQLEndpoint"))
 	executor, err := client.Execute(ctx, &pb.Request{Query: operationEOS})
@@ -101,7 +101,7 @@ func StreamMessages(ctx context.Context) {
 
 		if len(resp.Errors) > 0 {
 			for _, err := range resp.Errors {
-				fmt.Printf("Request failed: %s\n", err)
+				log.Printf("Request failed: %s\n", err)
 			}
 
 			/* We continue here, but you could take another decision here, like exiting the process */
@@ -115,14 +115,26 @@ func StreamMessages(ctx context.Context) {
 		}
 
 		result := document.SearchTransactionsForward
-		reverted := ""
 		if result.Undo {
-			reverted = "REVERTED :: "
-		}
-
-		for _, action := range result.Trace.MatchingActions {
-			data := action.JSON
-			log.Println(reverted, "Message found: ", data["ipfs_hash"], "; Memo: ", data["memo"])
+			log.Println("EOSIO transaction has been reverted, halting process. Skipping.")
+		} else {
+			for _, action := range result.Trace.MatchingActions {
+				data := action.JSON
+				receiveGQL(channelName, data)
+			}
 		}
 	}
+}
+
+func receiveGQL(channelName string, data map[string]interface{}) (Message, error) {
+	ipfsHash := data["ipfs_hash"]
+	memo := data["memo"]
+	log.Println("Received notification of new message: ", ipfsHash, "; memo: ", memo)
+
+	msg, err := Load(channelName, ipfsHash.(string))
+	if err != nil {
+		log.Println("Error loading message: ", err)
+		return msg, err
+	}
+	return msg, nil
 }

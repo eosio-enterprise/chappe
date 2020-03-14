@@ -2,13 +2,11 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 
-	"github.com/dfuse-io/eosws-go"
 	"github.com/eosio-enterprise/chappe/pkg"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // MakeSubscribe ...
@@ -26,31 +24,10 @@ func MakeSubscribe() *cobra.Command {
 
 		go func() {
 
-			pkg.StreamMessages(context.TODO())
-
-			client := pkg.GetClient()
-			err := client.Send(pkg.GetActionTraces())
-			if err != nil {
-				log.Fatalf("Failed to send request to dfuse: %s", err)
-			}
-
-			for {
-				msg, err := client.Read()
-				if err != nil {
-					log.Fatalf("Cannot read from dfuse client: %s", err)
-				}
-
-				switch m := msg.(type) {
-				case *eosws.ActionTrace:
-					pkg.StreamMessages(context.TODO())
-					// pkg.Receive(channelName, m)
-				case *eosws.Progress:
-					fmt.Print(".") // poor man's progress bar, using print not log
-				case *eosws.Listening:
-					log.Println("Received Listening Message ...")
-				default:
-					log.Println("Received Unsupported Message", m)
-				}
+			if viper.GetString("Dfuse.Protocol") == "WebSocket" {
+				pkg.StreamWS(channelName)
+			} else {
+				pkg.StreamMessages(context.TODO(), channelName)
 			}
 		}()
 

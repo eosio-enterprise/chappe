@@ -44,8 +44,8 @@ func MakePublish() *cobra.Command {
 
 		for {
 			privatePayload := pkg.GetFakePrivatePayload()
-			persistedObject := pkg.Message{}
-			persistedObject.UnencryptedPayload = readableMemo
+			msg := pkg.NewMessage()
+			msg.Payload["BlockchainMemo"] = []byte(readableMemo)
 
 			payload, _ := json.MarshalIndent(privatePayload, "", "  ")
 			log.Println("Publishing: \n", string(payload))
@@ -57,15 +57,15 @@ func MakePublish() *cobra.Command {
 					log.Panicf("Error with AES encryption: %s", err)
 				}
 
-				persistedObject.EncryptedPayload = aesEncryptedData
+				msg.Payload["EncryptedPayload"] = aesEncryptedData
 				encryptedAesKey, err := encryption.RsaEncrypt(channelName, aesKey[:])
 				if err != nil {
 					log.Panicf("Error with RSA encryption: %s", err)
 				}
-				persistedObject.EncryptedAESKey = encryptedAesKey
+				msg.Payload["EncryptedAESKey"] = encryptedAesKey
 			}
 
-			trxID, err := pkg.Publish(persistedObject)
+			trxID, err := pkg.Publish(msg)
 			if err != nil {
 				log.Println("Error submitting transaction to EOSIO: ", err)
 			}

@@ -32,22 +32,6 @@ type PubActionPayload struct {
 	Memo     string `json:"memo"`
 }
 
-// func getEosioAPI() *eos.API {
-// 	api, found := c.Get("eos.API")
-// 	if !found {
-// 		api := eos.New(viper.GetString("Eosio.Endpoint"))
-
-// 		keyBag := &eos.KeyBag{}
-// 		err := keyBag.ImportPrivateKey(viper.GetString("Eosio.PublishPrivateKey"))
-// 		if err != nil {
-// 			log.Panicf("import private key: %s", err)
-// 		}
-// 		api.SetSigner(keyBag)
-// 	}
-// 	typedAPI := api.(eos.API)
-// 	return &typedAPI
-// }
-
 func addToEosio(cid string, readableMemo string) (string, error) {
 	api := eos.New(viper.GetString("Eosio.Endpoint"))
 
@@ -96,5 +80,12 @@ func addToIpfs(payload Message) string {
 
 // Publish ...
 func Publish(payload Message) (string, error) {
-	return addToEosio(addToIpfs(payload), payload.UnencryptedPayload)
+	var blockchainMemo string
+	memoBytes, memoExists := payload.Payload["BlockchainMemo"]
+	if !memoExists {
+		blockchainMemo = string("")
+	} else {
+		blockchainMemo = string(memoBytes)
+	}
+	return addToEosio(addToIpfs(payload), blockchainMemo)
 }
