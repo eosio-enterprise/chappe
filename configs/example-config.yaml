@@ -1,12 +1,14 @@
 IPFS:
-    Endpoint: ipfs.digscar.com:5001
+    Endpoint: ec2-3-232-158-110.compute-1.amazonaws.com:5001
 Eosio:
     Endpoint: https://kylin.eosusa.news
     PublishAccount: messengerbus
     PublishPrivateKey: 5KAP1zytghuvowgprSPLNasajibZcxf4KMgdgNbrNj98xhcGAUa
 Dfuse:
+    Protocol: GraphQL  # WebSocket will use WSEndpoint; else it defaults to GraphQL
     WSEndpoint: wss://kylin.eos.dfuse.io/v1/stream
     Origin: github.com/eosio-enterprise/chappe
-    ApiKey: <insert dfuse API key here>
+    ApiKey: <<insert dfuse api key here>>
+    GraphQLEndpoint: kylin.eos.dfuse.io:443
 KeyDirectory: channels/
-PublishInterval: 1s  # Go Duration object
+PublishInterval: 5s  # Go Duration object

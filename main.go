@@ -11,11 +11,6 @@ import (
 
 func main() {
 
-	viper.SetConfigFile("configs/config.yaml")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("config file not found: %s", err)
-	}
-
 	cmdVersion := cmd.MakeVersion()
 	cmdCreate := cmd.MakeCreate()
 	cmdUpdate := cmd.MakeUpdate()
@@ -28,6 +23,13 @@ func main() {
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Help()
 		},
+	}
+
+	var configFile string
+	rootCmd.Flags().StringVarP(&configFile, "config-file", "c", "configs/config.yaml", "Path/name of configuration file")
+	viper.SetConfigFile(configFile) //"configs/config.yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("config file not found: %s", err)
 	}
 
 	rootCmd.AddCommand(cmdCreate)
