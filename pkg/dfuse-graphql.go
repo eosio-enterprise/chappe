@@ -43,7 +43,7 @@ func getToken(apiKey string) (token string, expiration time.Time, err error) {
 func createClient(endpoint string) pb.GraphQLClient {
 	dfuseAPIKey := viper.GetString("Dfuse.ApiKey")
 	if dfuseAPIKey == "" {
-		panic("Dfuse.ApiKey is required in configuration")
+		log.Fatal("Dfuse.ApiKey is required in configuration")
 	}
 
 	token, _, err := getToken(dfuseAPIKey)
@@ -86,7 +86,7 @@ type eosioDocument struct {
 }
 
 // StreamMessages ...
-func StreamMessages(ctx context.Context, channelName string) {
+func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) {
 	/* The client can be re-used for all requests, cache it at the appropriate level */
 	client := createClient(viper.GetString("Dfuse.GraphQLEndpoint"))
 	executor, err := client.Execute(ctx, &pb.Request{Query: operationEOS})
@@ -121,7 +121,14 @@ func StreamMessages(ctx context.Context, channelName string) {
 		} else {
 			for _, action := range result.Trace.MatchingActions {
 				data := action.JSON
-				receiveGQL(channelName, data)
+				if data["memo"] == "receipt" {
+					log.Println("Received receipt, ignoring.")
+				} else {
+					message, err := receiveGQL(channelName, data)
+					if err == nil && sendReceipts {
+						SendReceipt(channelName, message)
+					}
+				}
 			}
 		}
 	}

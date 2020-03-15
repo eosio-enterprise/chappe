@@ -5,4 +5,3 @@ find_package(eosio.cdt)
 
 add_contract( messenger messenger messenger.cpp )
 target_include_directories( messenger PUBLIC ${CMAKE_SOURCE_DIR}/../include )
-target_ricardian_directory( messenger ${CMAKE_SOURCE_DIR}/../ricardian )

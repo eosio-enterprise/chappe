@@ -13,10 +13,20 @@ import (
 
 // Message ...
 type Message struct {
-	EncryptedPayload []byte
-	EncryptedAESKey  []byte
-	ReadableMemos    []string
-	Payload          map[string][]byte
+	// EncryptedPayload []byte
+	// EncryptedAESKey  []byte
+	// ReadableMemos    []string
+	Payload map[string][]byte
+}
+
+// Bytes ...
+func (m Message) Bytes() []byte {
+	jsonMessage, err := json.Marshal(m)
+	if err != nil {
+		log.Println("Cannot convert to message to bytes", err)
+	}
+
+	return []byte(jsonMessage)
 }
 
 // NewMessage - creates a new Message object, provisions the Payload map

@@ -4,6 +4,20 @@
     "types": [],
     "structs": [
         {
+            "name": "pair_string_string",
+            "base": "",
+            "fields": [
+                {
+                    "name": "key",
+                    "type": "string"
+                },
+                {
+                    "name": "value",
+                    "type": "string"
+                }
+            ]
+        },
+        {
             "name": "pub",
             "base": "",
             "fields": [
@@ -16,12 +30,27 @@
                     "type": "string"
                 }
             ]
+        },
+        {
+            "name": "pubmap",
+            "base": "",
+            "fields": [
+                {
+                    "name": "payload",
+                    "type": "pair_string_string[]"
+                }
+            ]
         }
     ],
     "actions": [
         {
             "name": "pub",
             "type": "pub",
+            "ricardian_contract": ""
+        },
+        {
+            "name": "pubmap",
+            "type": "pubmap",
             "ricardian_contract": ""
         }
     ],

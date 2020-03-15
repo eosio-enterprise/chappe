@@ -21,7 +21,8 @@ Eosio:
     PublishAccount: messengerbus
     PublishPrivateKey: 5KAP1zytghuvowgprSPLNasajibZcxf4KMgdgNbrNj98xhcGAUa
 Dfuse:
-    WSEndpoint: wss://kylin.eos.dfuse.io/v1/stream
+    Protocol: GraphQL
+    GraphQLEndpoint: kylin.eos.dfuse.io:443
     Origin: github.com/eosio-enterprise/chappe
     ApiKey: web_***  # Replace this, get one at dfuse.io
 KeyDirectory: channels/
@@ -43,6 +44,14 @@ Open New Shell, and run Publisher
 ```
 ./chappe publish --channel-name chan4242 --readable-memo "This is human-readable, unencrypted memo"
 ```
+## Features
+- Send/receive encrypted (or unencrypted) messages/documents using public or private EOSIO chains
+- Messages are sent on channels, and all nodes with the channel key can read messages
+- Optionally publish receipts (acknowledgements) signed with a node's key
+- Support for large messages and files
+- Optionally mask all metadata (publisher, type of message)
+- (Coming Soon) Ability to set reveal parameters that automatically publish decrypted version after time elapses
+- (Coming Soon) Hierarchies for data visibility
 
 ## Menu
 Run chappe

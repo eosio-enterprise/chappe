@@ -10,9 +10,9 @@ import (
 )
 
 // StreamWS ...
-func StreamWS(channelName string) {
-	client := GetClient()
-	err := client.Send(GetActionTraces())
+func StreamWS(channelName string, sendReceipts bool) {
+	client := getClient()
+	err := client.Send(getActionTraces())
 	if err != nil {
 		log.Fatalf("Failed to send request to dfuse: %s", err)
 	}
@@ -25,8 +25,10 @@ func StreamWS(channelName string) {
 
 		switch m := msg.(type) {
 		case *eosws.ActionTrace:
-			//	pkg.StreamMessages(context.TODO())
-			receiveWS(channelName, m)
+			message, err := receiveWS(channelName, m)
+			if err == nil && sendReceipts {
+				SendReceipt(channelName, message)
+			}
 		case *eosws.Progress:
 			fmt.Print(".") // poor man's progress bar, using print not log
 		case *eosws.Listening:
@@ -48,11 +50,12 @@ func receiveWS(channelName string, dfuseMessage *eosws.ActionTrace) (Message, er
 		log.Println("Error loading message: ", err)
 		return msg, err
 	}
+
 	return msg, nil
 }
 
 // GetClient ...
-func GetClient() *eosws.Client {
+func getClient() *eosws.Client {
 	apiKey := viper.GetString("Dfuse.ApiKey")
 	if apiKey == "" {
 		log.Fatalf("Missing Dfuse.ApiKey in config")
@@ -74,7 +77,7 @@ func GetClient() *eosws.Client {
 }
 
 // GetActionTraces ...
-func GetActionTraces() *eosws.GetActionTraces {
+func getActionTraces() *eosws.GetActionTraces {
 	ga := &eosws.GetActionTraces{}
 	ga.ReqID = "chappe"
 	ga.StartBlock = -300

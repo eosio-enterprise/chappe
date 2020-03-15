@@ -1,6 +1,7 @@
 package encryption
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -9,62 +10,43 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/spf13/viper"
 )
 
-// ParseRsaPublicKeyFromPem ...
-func ParseRsaPublicKeyFromPem(pubPEM []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode(pubPEM)
-	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
-	}
+// CreateChannel ...
+func CreateChannel(keyname string) (*rsa.PrivateKey, *rsa.PublicKey) {
 
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
+	priv, pub := generateRsaKeyPair()
 
-	switch pub := pub.(type) {
-	case *rsa.PublicKey:
-		return pub, nil
-	default:
-		break // fall through
-	}
-	return nil, errors.New("Key type is not RSA")
+	// Export the keys to pem string
+	privPem := exportPrivateKey(priv)
+	pubPem, _ := exportPublicKey(pub)
+
+	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pub", pubPem, 0644)
+	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pem", privPem, 0644)
+
+	return priv, pub
 }
 
-// ParseRsaPrivateKeyFromPem ...
-func ParseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(privPEM)
-	if block == nil {
-		return nil, errors.New("failed to parse PEM block containing the key")
-	}
+// CalcReceipt ...
+func CalcReceipt(payload []byte) ([]byte, error) {
 
-	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	var signature []byte
+	rsaPrivateKey := load(viper.GetString("DeviceRSAPrivateKey"))
+
+	// Only small messages can be signed directly; thus the hash of a
+	// message, rather than the message itself, is signed.
+	hashed := sha256.Sum256(payload)
+
+	signature, err := rsa.SignPKCS1v15(rand.Reader, rsaPrivateKey, crypto.SHA256, hashed[:])
 	if err != nil {
-		return nil, err
+		log.Printf("Error from signing: %s\n", err)
+		return signature, err
 	}
-
-	return priv, nil
-}
-
-func loadPublicKey(keyname string) *rsa.PublicKey {
-
-	publicKeyPemStr, err := ioutil.ReadFile(viper.GetString("KeyDirectory") + keyname + ".pub")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
-		return nil
-	}
-
-	publicKey, err := ParseRsaPublicKeyFromPem(publicKeyPemStr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
-		return nil
-	}
-
-	return publicKey
+	return signature, nil
 }
 
 // RsaEncrypt ...
@@ -92,6 +74,42 @@ func RsaDecrypt(channelName string, payload []byte) ([]byte, error) {
 	}
 
 	return plaintext, nil
+}
+
+func loadPublicKey(keyname string) *rsa.PublicKey {
+	publicKeyPemStr, err := ioutil.ReadFile(viper.GetString("KeyDirectory") + keyname + ".pub")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
+		return nil
+	}
+
+	publicKey, err := parseRsaPublicKeyFromPem(publicKeyPemStr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from reading key file: %s\n", err)
+		return nil
+	}
+
+	return publicKey
+}
+
+func parseRsaPublicKeyFromPem(pubPEM []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pubPEM)
+	if block == nil {
+		return nil, errors.New("failed to parse PEM block containing the key")
+	}
+
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	switch pub := pub.(type) {
+	case *rsa.PublicKey:
+		return pub, nil
+	default:
+		break // fall through
+	}
+	return nil, errors.New("Key type is not RSA")
 }
 
 func parseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
@@ -152,19 +170,4 @@ func exportPublicKey(pubkey *rsa.PublicKey) ([]byte, error) {
 		},
 	)
 	return pubkeyPem, nil
-}
-
-// CreateChannel ...
-func CreateChannel(keyname string) (*rsa.PrivateKey, *rsa.PublicKey) {
-
-	priv, pub := generateRsaKeyPair()
-
-	// Export the keys to pem string
-	privPem := exportPrivateKey(priv)
-	pubPem, _ := exportPublicKey(pub)
-
-	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pub", pubPem, 0644)
-	ioutil.WriteFile(viper.GetString("KeyDirectory")+keyname+".pem", privPem, 0644)
-
-	return priv, pub
 }

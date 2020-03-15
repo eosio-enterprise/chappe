@@ -19,15 +19,18 @@ func MakeSubscribe() *cobra.Command {
 	}
 
 	var channelName string
+	var sendReceipts bool
 	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "channel name")
+	command.Flags().BoolVarP(&sendReceipts, "send-receipts", "r", false, "send device-specific receipts back to hub")
+
 	command.Run = func(cmd *cobra.Command, args []string) {
 
 		go func() {
 
 			if viper.GetString("Dfuse.Protocol") == "WebSocket" {
-				pkg.StreamWS(channelName)
+				pkg.StreamWS(channelName, sendReceipts)
 			} else {
-				pkg.StreamMessages(context.TODO(), channelName)
+				pkg.StreamMessages(context.TODO(), channelName, sendReceipts)
 			}
 		}()
 
