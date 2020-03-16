@@ -1,9 +1,8 @@
 
 # Chappe Private Messaging
-This project implements many-to-many encryption using ```eosio``` and IPFS. The use case is described in the [background document](BACKGROUND.md) (it's a bit outdated in terms of design though)
+This project implements many-to-many private/permissioned data using ```eosio``` and IPFS. 
 
 ## Quick Start
-
 Clone repo & build
 ``` bash
 git clone https://github.com/eosio-enterprise/chappe
@@ -47,11 +46,18 @@ Open New Shell, and run Publisher
 ## Features
 - Send/receive encrypted (or unencrypted) messages/documents using public or private EOSIO chains
 - Messages are sent on channels, and all nodes with the channel key can read messages
-- Optionally publish receipts (acknowledgements) signed with a node's key
+- Optionally publish receipts (acknowledgements) signed with a subscribers individual key
 - Support for large messages and files
-- Optionally mask all metadata (publisher, type of message)
+- Optionally mask all metadata (it can be revealed or masked attribute by attribute)
+    - Publishers and subscribers do not know how many subscribers there are on a channel
+    - Subscribers do not know who Published a message
 - (Coming Soon) Ability to set reveal parameters that automatically publish decrypted version after time elapses
-- (Coming Soon) Hierarchies for data visibility
+- (Coming Soon) Hierarchies for permissioning visibility (JEDI integration)
+- (Coming Soon) Support for publishers to track receipt acknowledgements and report exceptions
+- (Coming Soon) Channel key distribution, encrypted and targeted to specific recipients
+- (Coming Soon) Concurrency for publishers and subscribers
+- (Road Map) Support for zero knowledge proofs
+- (Road Map) Messages for nodes to create and inter-operate private Proof of Authority EOSIO chains by publishing encrypted genesis.json file
 
 ## Menu
 Run chappe
@@ -60,8 +66,7 @@ Run chappe
 Welcome to Chappe Private Messaging for EOSIO
 
 Usage:
-  chappe [flags]
-  chappe [command]
+  chappe [flags] [command]
 
 Available Commands:
   create      Create chappe channel
@@ -97,7 +102,7 @@ This runs a server, so run it in a separate terminal.
 
 You can optionally request that the subscriber submit receipts/acknowledgements for each message. To prove that the receipient received and decrypted the message, the recipient's device key (unique to only that node) signs the decrypted message. This signature is posted to the blockchain, and the original sender may verify that the intended recipient(s) successfully received the message.
 
-To send a receipt, pass the ```send-receipts``` or ```-r``` flag.
+To use this feature, you must set the ```DeviceRSAPrivateKey``` configuration (without file .pem extension) and pass the ```send-receipts``` or ```-r``` flag.
 ``` bash
 ./chappe subscribe --channel-name chan424 -r
 ```
@@ -148,9 +153,7 @@ The blockchain transaction payload appears like this:
 #### Hybrid Encryption
 In order to support large messages (files), we use hybrid encryption as described in this paper (https://pdfs.semanticscholar.org/87ff/ea85fbf52e22e4808e1fcc9e40ead4ff7738.pdf). 
 
-We generate a random symmetric key for each message, then use the channel's (recipient's) assymetric public key to encrypt the symmetric key. 
-
-```chappe``` handles all of this but the purpose of this is for documentation of how it works
+We generate a random symmetric key for each message, then use the channel's (recipient's) assymetric public key to encrypt the symmetric key. It works like this:
 1. Generate a Random AES Key (Symmetric)
 2. Encrypt the Message Data with the AES Key
 3. Encrypt the AES Key with the Channel's Private Key
