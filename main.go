@@ -25,11 +25,18 @@ func main() {
 		},
 	}
 
-	var configFile string
-	rootCmd.Flags().StringVarP(&configFile, "config-file", "c", "configs/config.yaml", "Path/name of configuration file")
-	viper.SetConfigFile(configFile) //"configs/config.yaml")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Fatalf("config file not found: %s", err)
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./configs")
+	viper.AddConfigPath("/etc/chappe/")
+	viper.AddConfigPath("$HOME/.chappe")
+	viper.AddConfigPath(".")
+	viper.SetEnvPrefix("CHAPPE")
+	viper.AutomaticEnv()
+
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Fatal error config file: %s \n", err)
 	}
 
 	rootCmd.AddCommand(cmdCreate)

@@ -21,19 +21,17 @@ func MakePublish() *cobra.Command {
 	var command = &cobra.Command{
 		Use:   "publish",
 		Short: "Publish a private message to a channel",
-		Long:  `Create and share private messages with other nodes on a chappe network.`,
-		Example: `  chappe publish
-  chappe publish --channel-name MyChannel --readable-memo "This memo is not encrypted"
-  chappe publish --encrypt false`,
-
+		Long: `Create and share private messages with other nodes on a chappe network.
+					Currently, only a randomly generated JSON object is sent as the
+					message body. Other options will be added shortly.`,
+		Example:      `chappe publish --channel-name MyChannel --memo "This memo is not encrypted"`,
 		SilenceUsage: false,
 	}
 
 	var channelName, readableMemo string
 	var encryptFlag bool
-
 	command.Flags().StringVarP(&channelName, "channel-name", "n", "", "channel name")
-	command.Flags().StringVarP(&readableMemo, "readable-memo", "m", "", "Human readable memo to attach to payload (never encrypted)")
+	command.Flags().StringVarP(&readableMemo, "memo", "m", "", "Human readable memo to attach to payload (never encrypted)")
 	command.Flags().BoolVarP(&encryptFlag, "encrypt", "", true, "Boolean flag whether to encrypt payload - defaults to true")
 
 	command.RunE = func(command *cobra.Command, args []string) error {
