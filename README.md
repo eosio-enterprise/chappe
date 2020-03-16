@@ -64,13 +64,11 @@ Usage:
   chappe [command]
 
 Available Commands:
-  create      Create chappe artifacts
-  get         Get chappe artifacts
+  create      Create chappe channel
+  get         Get chappe message (via IPFS cid)
   help        Help about any command
   publish     Publish a private message to a channel
-  server      Run a server
   subscribe   Subscribe to a channel
-  update      Print update instructions
   version     Print the version
 
 Flags:
@@ -79,19 +77,11 @@ Flags:
 Use "chappe [command] --help" for more information about a command.
 ```
 
-**PRs Welcome**
-
 ## Usage
-### Dependencies
-#### IPFS
-It's simple to run your own IPFS node using Docker with only these 3 commands, or you may use ```ipfs.digscar.com``` for light testing.
-I run go-ipfs:latest running in Docker. 
-``` bash
-export ipfs_staging=</absolute/path/to/somewhere/>
-export ipfs_data=</absolute/path/to/somewhere_else/>
+### Configuration File
+Chappe will locate a file named ```config.yaml``` by looking in the following folders: ```.```, ```configs```, ```/etc/chappe```, and ```$HOME/.chappe```. 
 
-docker run -d --name ipfs_host -v $ipfs_staging:/export -v $ipfs_data:/data/ipfs -p 4001:4001 -p 127.0.0.1:8080:8080 -p 127.0.0.1:5001:5001 ipfs/go-ipfs:latest
-```
+You can override any variable in the configuration file by setting an environment variable with a prefix of ```CHAPPE_```, followed by an all capital letter version of the variable that you want to override. 
 
 ### Create a Key (Channel)
 ``` bash
@@ -100,12 +90,17 @@ docker run -d --name ipfs_host -v $ipfs_staging:/export -v $ipfs_data:/data/ipfs
 The channel key is an assymetric RSA key. If you create a channel and you want another node to receive your messages, you would share the "chan4242.pem" file.
 
 ### Subscribe to the Channel
-This runs a server, so fork your terminal shell to hold the ENV VARS intact. 
+This runs a server, so run it in a separate terminal.
 ``` bash
 ./chappe subscribe --channel-name chan4242
 ```
 
-(After I publish, I will describe what happens with the subscribe process)
+You can optionally request that the subscriber submit receipts/acknowledgements for each message. To prove that the receipient received and decrypted the message, the recipient's device key (unique to only that node) signs the decrypted message. This signature is posted to the blockchain, and the original sender may verify that the intended recipient(s) successfully received the message.
+
+To send a receipt, pass the ```send-receipts``` or ```-r``` flag.
+``` bash
+./chappe subscribe --channel-name chan424 -r
+```
 
 ### Publish to the Channel
 On a separate tab, publish a message:
@@ -113,8 +108,7 @@ On a separate tab, publish a message:
 ./chappe publish --channel-name chan4242 --readable-memo "This is human-readable, unencrypted memo"
 ```
 
-Currently, the publish command generates fake private data to be shared on the channel.
-
+Currently, the publish command generates fake private data to be shared on the channel. More options will be added soon.
 For example: 
 ``` json
 {
@@ -133,102 +127,46 @@ For example:
 }
 ```
 
+The payload data is encrypted (see below) and constructed into an object and saved to IPFS. Here's an example of what one of the objects looks like: http://ipfs.digscar.com:8080/ipfs/QmNLuCqYR23RLzkE8fZvrnhsfaYJiawWAXcs2miLdeckND
+
+The blockchain transaction payload appears like this: 
+``` json 
+{
+   "payload": [
+      {
+         "key": "cid",
+         "value": "QmfBmT8CDSaRYQ6b7z1URNXZih7jWvgRdHw1oH5rQFAqoy"
+      },
+      {
+         "key": "memo",
+         "value": "foobars memo"
+      }
+   ]
+}
+```
+
 #### Hybrid Encryption
 In order to support large messages (files), we use hybrid encryption as described in this paper (https://pdfs.semanticscholar.org/87ff/ea85fbf52e22e4808e1fcc9e40ead4ff7738.pdf). 
 
-We generate a random symmetric key to encrypt the message, then use the channel's (recipient's) assymetric public key to encrypt the symmetric key. 
+We generate a random symmetric key for each message, then use the channel's (recipient's) assymetric public key to encrypt the symmetric key. 
 
 ```chappe``` handles all of this but the purpose of this is for documentation of how it works
-##### Step 1: Generate a Random AES Key (Symmetric)
+1. Generate a Random AES Key (Symmetric)
+2. Encrypt the Message Data with the AES Key
+3. Encrypt the AES Key with the Channel's Private Key
+4. Publish Message to IPFS
+5. Publish IPFS CID (hash) to EOSIO Blockchain
 
-Generate a one-time use key to encrypt the body of the message.
-``` go
-key := [32]byte{}
-_, err := io.ReadFull(rand.Reader, key[:])
-if err != nil {
-    panic(err)
-}
+### Dependencies
+#### Dfuse
+You'll need a dfuse API key. You can register for a free one at dfuse.io
+
+#### IPFS
+It's simple to run your own IPFS node using Docker with only these 3 commands, or you may use ```ipfs.digscar.com``` for light testing.
+I run go-ipfs:latest running in Docker. 
+``` bash
+export ipfs_staging=</absolute/path/to/somewhere/>
+export ipfs_data=</absolute/path/to/somewhere_else/>
+
+docker run -d --name ipfs_host -v $ipfs_staging:/export -v $ipfs_data:/data/ipfs -p 4001:4001 -p 127.0.0.1:8080:8080 -p 127.0.0.1:5001:5001 ipfs/go-ipfs:latest
 ```
-##### Step 2: Encrypt the Message Data with the AES Key  
-
-``` go
-block, err := aes.NewCipher(key[:])
-if err != nil {
-    return nil, err
-}
-
-gcm, err := cipher.NewGCM(block)
-if err != nil {
-    return nil, err
-}
-
-nonce := make([]byte, gcm.NonceSize())
-_, err = io.ReadFull(rand.Reader, nonce)
-if err != nil {
-    return nil, err
-}
-
-aesEncryptedData := gcm.Seal(nonce, nonce, plaintext, nil), nil
-```
-
-##### Step 3: Encrypt the AES Key with the Channel's Private Key 
-``` go
-encryptedData, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, key, label)
-if err != nil {
-    fmt.Fprintf(os.Stderr, "Error from RSA encryption: %s\n", err)
-    return nil, err
-}
-```
-
-##### Step 4: Publish Object to IPFS
-The Encrypted Payload plus the Encrypted AES Key can be combined together, along with human-readable text to form the object. It is published to IPFS and a hash is returned.
-
-``` go
-type PersistedObject struct {
-    EncryptedPayload   []byte
-    EncryptedAESKey    []byte
-    UnencryptedPayload string
-}
-
-jsonPayloadNode, err := json.Marshal(payload)
-if err != nil {
-    fmt.Fprintf(os.Stderr, "Could not marshal:  %s", err)
-}
-
-hash, err := sh.Add(strings.NewReader(string(jsonPayloadNode)))
-if err != nil {
-    fmt.Fprintf(os.Stderr, "Could not add data to IPFS: %s", err)
-}
-fmt.Println("IPFS Hash: ", hash)
-```
-
-##### Step 5: Publish IPFS Hash to EOSIO Blockchain
-The user/node then publishes the IPFS hash to the appropriate blockchain, which records the event's existence, although elements of this metadata can be masked.
-``` go
-txOpts := &eos.TxOptions{}
-if err := txOpts.FillFromChain(api); err != nil {
-    panic(fmt.Errorf("filling tx opts: %s", err))
-}
-
-tx := eos.NewTransaction([]*eos.Action{message.NewPub(hash, readableMemo)}, txOpts)
-_, packedTx, err := api.SignTransaction(tx, txOpts.ChainID, eos.CompressionNone)
-if err != nil {
-    panic(fmt.Errorf("sign transaction: %s", err))
-}
-
-response, err := api.PushTransaction(packedTx)
-if err != nil {
-    panic(fmt.Errorf("push transaction: %s", err))
-}
-```
-
-### Back to Subscription
-
-The inverse happens on the subscription side: 
-- dfuse fires a websocket ( TODO: [ ] need to migrate to GraphQL)
-- IPFS document is retrieved
-- AES key is decrypted
-- Message is decrypted
-
-
-(TODO: need to add an signed acknowledgement back to the sender)

@@ -7,7 +7,7 @@ CONTRACT messenger : public contract {
       using contract::contract;
     
       ACTION pub( string ipfs_hash, string memo );
-
       ACTION pubmap ( std::map<string, string> payload);
-      using pub_action = action_wrapper<"pub"_n, &messenger::pub>;
+      // ACTION pubbytesmap ( std::map<string, byte[]> payload);
+      
 };

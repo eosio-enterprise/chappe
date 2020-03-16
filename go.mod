@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/bxcodec/faker v2.0.1+incompatible
 	github.com/dfuse-io/eosws-go v0.0.0-20191011181529-0eb3d4ce8743
-	github.com/eoscanada/eos-go v0.9.0
+	github.com/eoscanada/eos-go v0.9.1-0.20200316040626-bf09fb15dea8
 	github.com/golang/protobuf v1.3.3
 	github.com/ipfs/go-ipfs-api v0.0.3
 	github.com/multiformats/go-multihash v0.0.10 // indirect

@@ -66,7 +66,7 @@ func createClient(endpoint string) pb.GraphQLClient {
 
 // TODO: need to replace messengerbus with viper.GetString("Eosio.PublishAccount")
 const operationEOS = `subscription {
-	searchTransactionsForward(query:"receiver:messengerbus action:pub") {
+	searchTransactionsForward(query:"receiver:messengerbus action:pubmap") {
 	  undo cursor
 	  trace { id matchingActions { json } }
 	}
@@ -117,14 +117,21 @@ func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) 
 
 		result := document.SearchTransactionsForward
 		if result.Undo {
-			log.Println("EOSIO transaction has been reverted, halting process. Skipping.")
+			log.Println("EOSIO transaction has been reverted, halting process. Skipping")
+			continue
 		} else {
 			for _, action := range result.Trace.MatchingActions {
-				data := action.JSON
-				if data["memo"] == "receipt" {
+				data := action.JSON["payload"].([]interface{})
+				payload := make(map[string]string)
+				for i := 0; i < len(data); i++ {
+					imap := data[i].(map[string]interface{})
+					payload[imap["key"].(string)] = imap["value"].(string)
+				}
+
+				if payload["message_type"] == "receipt" {
 					log.Println("Received receipt, ignoring.")
 				} else {
-					message, err := receiveGQL(channelName, data)
+					message, err := receiveGQL(channelName, payload)
 					if err == nil && sendReceipts {
 						SendReceipt(channelName, message)
 					}
@@ -134,15 +141,19 @@ func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) 
 	}
 }
 
-func receiveGQL(channelName string, data map[string]interface{}) (Message, error) {
-	ipfsHash := data["ipfs_hash"]
-	memo := data["memo"]
-	log.Println("Received notification of new message: ", ipfsHash, "; memo: ", memo)
-
-	msg, err := Load(channelName, ipfsHash.(string))
-	if err != nil {
-		log.Println("Error loading message: ", err)
-		return msg, err
+func receiveGQL(channelName string, payload map[string]string) (Message, error) {
+	// log.Println(payload)
+	var msg Message
+	cid, cidExists := payload["cid"]
+	if cidExists {
+		log.Println("Received notification of new message: ", payload["cid"], "; memo: ", payload["memo"])
+		msg, err := Load(channelName, cid)
+		if err != nil {
+			log.Println("Error loading message: ", err)
+			return msg, err
+		}
+		return msg, nil
 	}
+	log.Println("Message does not contain a CID, discarding.")
 	return msg, nil
 }

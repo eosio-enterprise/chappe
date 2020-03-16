@@ -13,9 +13,6 @@ import (
 
 // Message ...
 type Message struct {
-	// EncryptedPayload []byte
-	// EncryptedAESKey  []byte
-	// ReadableMemos    []string
 	Payload map[string][]byte
 }
 

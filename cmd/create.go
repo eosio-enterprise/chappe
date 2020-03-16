@@ -28,11 +28,7 @@ func MakeCreate() *cobra.Command {
 
 		encryption.CreateChannel(channelName)
 
-		log.Println(
-			`=======================================================================
-key ` + channelName + ` created in files ` + channelName + `.pem (private) and ` + channelName + `.pub (public)
-=======================================================================`)
-
+		log.Println(`Channel files created: ` + channelName + `.pem (private key) and ` + channelName + `.pub (public key)`)
 		return nil
 	}
 	return command

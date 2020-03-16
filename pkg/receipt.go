@@ -18,13 +18,13 @@ func SendReceipt(channelName string, msg Message) error {
 	receiptStr := hex.EncodeToString(receiptSignature)
 	log.Println("Sending receipt: ", receiptStr)
 
-	// receiptMap := make(map[string]string)
-	// receiptMap["receipt"] = receiptStr
+	receiptMap := make(map[string]string)
+	receiptMap["receipt"] = receiptStr
+	receiptMap["message_type"] = "receipt"
 
-	// trxID, _ := PublishMapToBlockchain(receiptMap)
-	// // currently, receipts will reveal other parties on the channel
-	// // TODO: mask metadata on receipts
-	trxID, _ := AddToEosio(receiptStr, "receipt")
+	// currently, receipts will reveal other parties on the channel
+	// TODO: mask metadata on receipts
+	trxID, _ := PublishMapToBlockchain(receiptMap)
 
 	log.Println("Sent receipt, transaction ID: ", trxID)
 	return nil

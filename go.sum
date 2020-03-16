@@ -73,8 +73,8 @@ github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymF
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/eoscanada/eos-go v0.8.5/go.mod h1:RKrm2XzZEZWxSMTRqH5QOyJ1fb/qKEjs2ix1aQl0sk4=
-github.com/eoscanada/eos-go v0.9.0 h1:8Ko4/6lwn3KwbbDuaUB3p02OzbQVZVdxbp6noPChIkc=
-github.com/eoscanada/eos-go v0.9.0/go.mod h1:6RuJFiRU1figWZ39M33o2cERU2MdL6VllElYLHTZNeo=
+github.com/eoscanada/eos-go v0.9.1-0.20200316040626-bf09fb15dea8 h1:E79CwwnFq70bWq52l7qthwR2uY1EpVSUUojwUVbEgLs=
+github.com/eoscanada/eos-go v0.9.1-0.20200316040626-bf09fb15dea8/go.mod h1:6RuJFiRU1figWZ39M33o2cERU2MdL6VllElYLHTZNeo=
 github.com/ethereum/go-ethereum v1.9.9/go.mod h1:a9TqabFudpDu1nucId+k9S8R9whYaHnGBLKFouA5EAo=
 github.com/fatih/color v1.3.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fjl/memsize v0.0.0-20180418122429-ca190fb6ffbc/go.mod h1:VvhXpOYNQvB+uIk2RvXzuaQtkQJzzIx6lSBe1xv7hi0=
