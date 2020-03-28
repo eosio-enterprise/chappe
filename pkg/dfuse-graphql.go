@@ -22,7 +22,7 @@ import (
 
 func getToken(apiKey string) (token string, expiration time.Time, err error) {
 	reqBody := bytes.NewBuffer([]byte(fmt.Sprintf(`{"api_key":"%s"}`, apiKey)))
-	resp, err := http.Post("https://auth.dfuse.io/v1/auth/issue", "application/json", reqBody)
+	resp, err := http.Post(viper.GetString("Dfuse.AuthEndpoint"), "application/json", reqBody)
 	if err != nil {
 		err = fmt.Errorf("unable to obtain token: %s", err)
 		return
@@ -86,7 +86,7 @@ type eosioDocument struct {
 }
 
 // StreamMessages ...
-func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) {
+func StreamMessages(ctx context.Context, channelName, ledgerFile string, sendReceipts bool) {
 	/* The client can be re-used for all requests, cache it at the appropriate level */
 	client := createClient(viper.GetString("Dfuse.GraphQLEndpoint"))
 	executor, err := client.Execute(ctx, &pb.Request{Query: operationEOS})
@@ -131,7 +131,7 @@ func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) 
 				if payload["message_type"] == "receipt" {
 					log.Println("Received receipt, ignoring.")
 				} else {
-					message, err := receiveGQL(channelName, payload)
+					message, err := receiveGQL(channelName, ledgerFile, payload)
 					if err == nil && sendReceipts {
 						SendReceipt(channelName, message)
 					}
@@ -141,13 +141,12 @@ func StreamMessages(ctx context.Context, channelName string, sendReceipts bool) 
 	}
 }
 
-func receiveGQL(channelName string, payload map[string]string) (Message, error) {
-	// log.Println(payload)
+func receiveGQL(channelName, ledgerFile string, payload map[string]string) (Message, error) {
 	var msg Message
 	cid, cidExists := payload["cid"]
 	if cidExists {
 		log.Println("Received notification of new message: ", payload["cid"], "; memo: ", payload["memo"])
-		msg, err := Load(channelName, cid)
+		msg, err := Load(channelName, ledgerFile, cid)
 		if err != nil {
 			log.Println("Error loading message: ", err)
 			return msg, err

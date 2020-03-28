@@ -16,7 +16,7 @@ func SendReceipt(channelName string, msg Message) error {
 		log.Println("Cannot send receipt: ", err)
 	}
 	receiptStr := hex.EncodeToString(receiptSignature)
-	log.Println("Sending receipt: ", receiptStr)
+	//log.Println("Sending receipt: ", receiptStr)
 
 	receiptMap := make(map[string]string)
 	receiptMap["receipt"] = receiptStr

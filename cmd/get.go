@@ -14,11 +14,10 @@ import (
 // MakeGet ...
 func MakeGet() *cobra.Command {
 	var command = &cobra.Command{
-		Use:   "get",
-		Short: "Get chappe artifacts",
-		Long:  `Retrieve and optionally decrypt a specific item from the data store`,
-		Example: `  chappe get
-  chappe get --cid Qmah6HuF5kw1HF9yNfTxxoWBjCRYddestuMYn7RFF4RHnS`,
+		Use:          "get",
+		Short:        "Get chappe artifacts",
+		Long:         `Retrieve and optionally decrypt a specific item from the data store`,
+		Example:      ` chappe get --cid Qmah6HuF5kw1HF9yNfTxxoWBjCRYddestuMYn7RFF4RHnS`,
 		SilenceUsage: false,
 	}
 

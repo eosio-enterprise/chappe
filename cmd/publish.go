@@ -9,12 +9,11 @@ import (
 
 	"github.com/eosio-enterprise/chappe/internal/encryption"
 	"github.com/eosio-enterprise/chappe/pkg"
+	"github.com/fatih/color"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-// var c = cache.New(time.Hour)
 
 // MakePublish ...
 func MakePublish() *cobra.Command {
@@ -41,12 +40,13 @@ func MakePublish() *cobra.Command {
 		}
 
 		for {
-			privatePayload := pkg.GetFakePrivatePayload()
+			privatePayload := pkg.GetLedgerPayload()
 			msg := pkg.NewMessage()
 			msg.Payload["BlockchainMemo"] = []byte(readableMemo)
 
 			payload, _ := json.MarshalIndent(privatePayload, "", "  ")
-			log.Println("Publishing: \n", string(payload))
+			color.Green("Publishing:")
+			color.Green(string(payload))
 
 			if encryptFlag {
 				aesKey := encryption.NewAesEncryptionKey()

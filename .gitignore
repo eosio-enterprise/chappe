@@ -20,4 +20,4 @@ package-lock.json
 ipld
 Dockerfile
 demo.txt
-
+*.dat

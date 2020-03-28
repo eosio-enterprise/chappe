@@ -5,11 +5,12 @@ Eosio:
     PublishAccount: messengerbus
     PublishPrivateKey: 5KAP1zytghuvowgprSPLNasajibZcxf4KMgdgNbrNj98xhcGAUa
 Dfuse:
-    Protocol: GraphQL  # only GraphQL supported now # WebSocket will use WSEndpoint; else it defaults to GraphQL
+    Protocol: GraphQL  # only GraphQL supported now
     WSEndpoint: wss://kylin.eos.dfuse.io/v1/stream # only GraphQL supported now
     Origin: github.com/eosio-enterprise/chappe
     ApiKey: <<insert dfuse api key here>>
     GraphQLEndpoint: kylin.eos.dfuse.io:443
+    AuthEndpoint: https://auth.dfuse.io/v1/auth/issue
 KeyDirectory: channels/
 PublishInterval: 5s  # Go Duration object
 DeviceRSAPrivateKey: mykey # uniquely represents the device (used for receipts)
